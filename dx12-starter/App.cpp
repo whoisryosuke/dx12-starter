@@ -4,6 +4,7 @@ App::App()
 {
     // Create any new classes
     m_window_container = new Window();
+    m_ui = new DX12Playground::UI();
 }
 
 /// <summary>
@@ -33,6 +34,11 @@ bool App::Init()
 {
     // Initalize the window here and hydrate 
     m_window_container->Init();
+
+    // Initialize the UI (aka imgui). Requires the window context.
+    // TODO: Implement DX12 first - since imgui requires device + descriptor heap
+    //m_ui->Init(m_window_container->m_window);
+
 	return true;
 }
 
