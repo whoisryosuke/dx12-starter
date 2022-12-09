@@ -14,7 +14,7 @@ namespace DX12Playground {
 class UI
 {
 public:
-	bool Init(GLFWwindow* window);
+	bool Init(HWND window, ID3D12Device* device, ID3D12DescriptorHeap* srvHeap);
 	void Update();
 	void Render();
 };

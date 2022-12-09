@@ -1,38 +1,12 @@
 #include "UI.h"
 
-struct FrameContext
-{
-    ID3D12CommandAllocator* CommandAllocator;
-    UINT64                  FenceValue;
-};
 
 // Data
 static int const                    NUM_FRAMES_IN_FLIGHT = 3;
-static FrameContext                 g_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
-static UINT                         g_frameIndex = 0;
-
-static int const                    NUM_BACK_BUFFERS = 3;
-static ID3D12Device* g_pd3dDevice = NULL;
-static ID3D12DescriptorHeap* g_pd3dRtvDescHeap = NULL;
-static ID3D12DescriptorHeap* g_pd3dSrvDescHeap = NULL;
-static ID3D12CommandQueue* g_pd3dCommandQueue = NULL;
-static ID3D12GraphicsCommandList* g_pd3dCommandList = NULL;
-static ID3D12Fence* g_fence = NULL;
-static HANDLE                       g_fenceEvent = NULL;
-static UINT64                       g_fenceLastSignaledValue = 0;
-static IDXGISwapChain3* g_pSwapChain = NULL;
-static HANDLE                       g_hSwapChainWaitableObject = NULL;
-static ID3D12Resource* g_mainRenderTargetResource[NUM_BACK_BUFFERS] = {};
-static D3D12_CPU_DESCRIPTOR_HANDLE  g_mainRenderTargetDescriptor[NUM_BACK_BUFFERS] = {};
 
 namespace DX12Playground {
-    bool UI::Init(GLFWwindow* window)
+    bool UI::Init(HWND hwnd, ID3D12Device* device, ID3D12DescriptorHeap* srvHeap)
     {
-
-        // Get application window
-        // @see: https://www.glfw.org/docs/3.3/group__native.html#gafe5079aa79038b0079fc09d5f0a8e667
-        HWND hwnd = glfwGetWin32Window(window);
-
         // Initialize Direct3D
         //if (!CreateDeviceD3D(hwnd))
         //{
@@ -54,10 +28,10 @@ namespace DX12Playground {
 
         // Setup Platform/Renderer backends
         ImGui_ImplWin32_Init(hwnd);
-        ImGui_ImplDX12_Init(g_pd3dDevice, NUM_FRAMES_IN_FLIGHT,
-            DXGI_FORMAT_R8G8B8A8_UNORM, g_pd3dSrvDescHeap,
-            g_pd3dSrvDescHeap->GetCPUDescriptorHandleForHeapStart(),
-            g_pd3dSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+        ImGui_ImplDX12_Init(device, NUM_FRAMES_IN_FLIGHT,
+            DXGI_FORMAT_R8G8B8A8_UNORM, srvHeap,
+            srvHeap->GetCPUDescriptorHandleForHeapStart(),
+            srvHeap->GetGPUDescriptorHandleForHeapStart());
 
         // Load Fonts
         // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.

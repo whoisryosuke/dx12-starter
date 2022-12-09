@@ -1,6 +1,7 @@
 #pragma once
 #include "Window.h"
 #include "UI.h"
+#include "Renderer.h"
 
 /// <summary>
 /// The root application code. Opens a native window and runs DX12 renderer.
@@ -19,6 +20,7 @@ protected:
 	void Exit();
 	Window* m_window_container = nullptr;
 	DX12Playground::UI* m_ui = nullptr;
+	Renderer* m_renderer = nullptr;
 
 
 };
