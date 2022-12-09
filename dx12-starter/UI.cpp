@@ -55,5 +55,26 @@ namespace DX12Playground {
     }
     void UI::Render()
     {
+
+        // Our state
+        bool show_demo_window = true;
+        bool show_another_window = false;
+
+        // Start the Dear ImGui frame
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow(&show_demo_window);
+
+
+        // Rendering
+        ImGui::Render();
+
+
+    }
+    
+    void UI::RenderDrawData(ID3D12GraphicsCommandList* m_pd3dCommandList)
+    {
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pd3dCommandList);
     }
 }

@@ -11,6 +11,7 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 #endif
+#include "UI.h"
 
 static int const                    NUM_BACK_BUFFERS = 3;
 static int const                    NUM_FRAMES_IN_FLIGHT = 3;
@@ -28,6 +29,8 @@ public:
 	void CleanupDevice();
 	void CleanupRenderTarget();
 	void WaitForLastSubmittedFrame();
+	FrameContext* WaitForNextFrameResources();
+	void RenderUI(DX12Playground::UI* ui);
 
 	FrameContext                 m_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
 	UINT                         m_frameIndex = 0;

@@ -176,3 +176,67 @@ void Renderer::WaitForLastSubmittedFrame()
 	m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
 	WaitForSingleObject(m_fenceEvent, INFINITE);
 }
+
+void Renderer::RenderUI(DX12Playground::UI* ui)
+{
+	FrameContext* frameCtx = WaitForNextFrameResources();
+	UINT backBufferIdx = m_pSwapChain->GetCurrentBackBufferIndex();
+	frameCtx->CommandAllocator->Reset();
+
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = m_mainRenderTargetResource[backBufferIdx];
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	m_pd3dCommandList->Reset(frameCtx->CommandAllocator, NULL);
+	m_pd3dCommandList->ResourceBarrier(1, &barrier);
+
+	// Render Dear ImGui graphics
+	const float clear_color_with_alpha[4] = { ui->clear_color.x * ui->clear_color.w, ui->clear_color.y * ui->clear_color.w, ui->clear_color.z * ui->clear_color.w, ui->clear_color.w };
+	m_pd3dCommandList->ClearRenderTargetView(m_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, NULL);
+	m_pd3dCommandList->OMSetRenderTargets(1, &m_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
+	m_pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dSrvDescHeap);
+
+	// Have imgui backend render using command list
+	ui->RenderDrawData(m_pd3dCommandList);
+	
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	m_pd3dCommandList->ResourceBarrier(1, &barrier);
+	m_pd3dCommandList->Close();
+
+	m_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&m_pd3dCommandList);
+
+	m_pSwapChain->Present(1, 0); // Present with vsync
+	//m_pSwapChain->Present(0, 0); // Present without vsync
+
+	UINT64 fenceValue = m_fenceLastSignaledValue + 1;
+	m_pd3dCommandQueue->Signal(m_fence, fenceValue);
+	m_fenceLastSignaledValue = fenceValue;
+	frameCtx->FenceValue = fenceValue;
+}
+
+FrameContext* Renderer::WaitForNextFrameResources()
+{
+	UINT nextFrameIndex = m_frameIndex + 1;
+	m_frameIndex = nextFrameIndex;
+
+	HANDLE waitableObjects[] = { m_hSwapChainWaitableObject, NULL };
+	DWORD numWaitableObjects = 1;
+
+	FrameContext* frameCtx = &m_frameContext[nextFrameIndex % NUM_FRAMES_IN_FLIGHT];
+	UINT64 fenceValue = frameCtx->FenceValue;
+	if (fenceValue != 0) // means no fence was signaled
+	{
+		frameCtx->FenceValue = 0;
+		m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
+		waitableObjects[1] = m_fenceEvent;
+		numWaitableObjects = 2;
+	}
+
+	WaitForMultipleObjects(numWaitableObjects, waitableObjects, TRUE, INFINITE);
+
+	return frameCtx;
+}
