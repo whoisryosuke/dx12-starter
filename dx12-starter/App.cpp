@@ -41,14 +41,13 @@ bool App::Init()
     // @see: https://www.glfw.org/docs/3.3/group__native.html#gafe5079aa79038b0079fc09d5f0a8e667
     HWND hwnd = glfwGetWin32Window(m_window_container->m_window);
 
-    // Initialize the renderer
+    // Initialize the DX12 renderer
     if (!m_renderer->Init(hwnd)) {
         m_renderer->CleanupDevice();
         return true;
     }
 
-    // Initialize the UI (aka imgui). Requires the window context.
-    // TODO: Implement DX12 first - since imgui requires device + descriptor heap
+    // Initialize the UI (aka imgui). Requires the window context + DX12 device.
     m_ui->Init(hwnd, m_renderer->m_pd3dDevice, m_renderer->m_pd3dSrvDescHeap);
 
 	return true;
