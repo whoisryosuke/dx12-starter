@@ -11,7 +11,8 @@ public:
 	void Terminate();
 	void Update();
 	bool ShouldLoop();
-	void HandleResize(GLFWwindow* window, int width, int height);
+	void HandleResize(int width, int height);
+	static void HandleResizeCallback(GLFWwindow* window, int width, int height);
 	
 	int32_t m_width = 0;
 	int32_t m_height = 0;
