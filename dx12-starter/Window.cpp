@@ -57,6 +57,11 @@ void Window::Update()
     glfwPollEvents();
 }
 
+bool Window::ShouldLoop()
+{
+    return !glfwWindowShouldClose(m_window);
+}
+
 void Window::HandleResize(GLFWwindow* window, int width, int height)
 {
     m_width = width;

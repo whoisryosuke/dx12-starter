@@ -19,10 +19,8 @@ void App::Run()
     }
 
     // The app loop
-    while (!glfwWindowShouldClose(m_window_container->m_window))
+    while (m_window_container->ShouldLoop())
     {
-        glfwPollEvents();
-        
         // Run any updates before rendering
         Update();
 

@@ -10,6 +10,7 @@ public:
 	bool Init();
 	void Terminate();
 	void Update();
+	bool ShouldLoop();
 	void HandleResize(GLFWwindow* window, int width, int height);
 	
 	int32_t m_width = 0;
