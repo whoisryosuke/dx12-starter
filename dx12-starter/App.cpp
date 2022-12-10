@@ -29,6 +29,8 @@ void App::Run()
         // Render the 3D!
         Render();
     }
+
+    Exit();
 }
 
 bool App::Init()
@@ -62,9 +64,12 @@ void App::Render()
 
 void App::Update()
 {
+    m_window_container->Update();
 }
 
 void App::Exit()
 {
+    m_renderer->WaitForLastSubmittedFrame();
+    m_ui->Terminate();
     m_window_container->Terminate();
 }

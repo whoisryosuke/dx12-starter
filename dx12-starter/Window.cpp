@@ -41,6 +41,7 @@ bool Window::Init()
     const int32_t windowLeft = videoMode->width / 2 - width / 2;
     const int32_t windowTop = videoMode->height / 2 - height / 2;
     glfwSetWindowPos(m_window, windowLeft, windowTop);
+    //glfwSetFramebufferSizeCallback(m_window, HandleResize);
 
     return true;
 }
@@ -49,4 +50,15 @@ void Window::Terminate()
 {
     glfwDestroyWindow(m_window);
     glfwTerminate();
+}
+
+void Window::Update()
+{
+    glfwPollEvents();
+}
+
+void Window::HandleResize(GLFWwindow* window, int width, int height)
+{
+    m_width = width;
+    m_height = height;
 }

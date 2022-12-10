@@ -87,4 +87,11 @@ namespace DX12Playground {
     {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pd3dCommandList);
     }
+    void UI::Terminate()
+    {
+        // Cleanup
+        ImGui_ImplDX12_Shutdown();
+        ImGui_ImplWin32_Shutdown();
+        ImGui::DestroyContext();
+    }
 }

@@ -18,6 +18,7 @@ public:
 	void Update();
 	void Render();
 	void RenderDrawData(ID3D12GraphicsCommandList* m_pd3dCommandList);
+	void Terminate();
 
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 };
