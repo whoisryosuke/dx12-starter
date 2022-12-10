@@ -42,12 +42,6 @@ bool Window::Init()
     const int32_t windowTop = videoMode->height / 2 - height / 2;
     glfwSetWindowPos(m_window, windowLeft, windowTop);
 
-    // Set a pointer to this Window class in GLFW
-    // Lets us access the Window class methods in callbacks
-    // @see: glfw.org/faq.html#216---how-do-i-use-c-methods-as-callbacks
-    glfwSetWindowUserPointer(m_window, this);
-
-    glfwSetFramebufferSizeCallback(m_window, HandleResizeCallback);
 
     return true;
 }
@@ -72,10 +66,4 @@ void Window::HandleResize(int width, int height)
 {
     m_width = width;
     m_height = height;
-}
-
-void Window::HandleResizeCallback(GLFWwindow* window, int width, int height)
-{
-    Window* window_ref = static_cast<Window*>(glfwGetWindowUserPointer(window));
-    window_ref->HandleResize(width, height);
 }

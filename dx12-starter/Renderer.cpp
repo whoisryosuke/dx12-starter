@@ -218,6 +218,27 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	frameCtx->FenceValue = fenceValue;
 }
 
+void Renderer::HandleResize(int width, int height)
+{
+
+	//_deviceContext->Flush();
+	//DestroySwapchainResources();
+
+	m_pSwapChain->ResizeBuffers(
+		0,
+		width,
+		height,
+		DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM,
+		0);
+
+	//CreateSwapchainResources();
+}
+
+void Renderer::HandleResizeCallback(Renderer* renderer, int width, int height)
+{
+	return reinterpret_cast<Renderer*>(renderer)->HandleResize(width, height);
+}
+
 FrameContext* Renderer::WaitForNextFrameResources()
 {
 	UINT nextFrameIndex = m_frameIndex + 1;

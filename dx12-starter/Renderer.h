@@ -31,6 +31,9 @@ public:
 	void WaitForLastSubmittedFrame();
 	FrameContext* WaitForNextFrameResources();
 	void RenderUI(DX12Playground::UI* ui);
+	void HandleResize(int width, int height);
+	static void HandleResizeCallback(Renderer* renderer, int width, int height);
+
 
 	FrameContext                 m_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
 	UINT                         m_frameIndex = 0;
