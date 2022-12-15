@@ -90,6 +90,61 @@ bool Renderer::Init(HWND hWnd)
 		m_pd3dCommandList->Close() != S_OK)
 		return false;
 
+
+	// Create the vertex buffer.
+	{
+		// Define the geometry for a triangle.
+		float m_aspectRatio = 1.0f;
+		Vertex triangleVertices[] =
+		{
+			{ { 0.0f, 0.25f * m_aspectRatio, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+			{ { 0.25f, -0.25f * m_aspectRatio, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+			{ { -0.25f, -0.25f * m_aspectRatio, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+		};
+
+		const UINT vertexBufferSize = sizeof(triangleVertices);
+
+		// Note: using upload heaps to transfer static data like vert buffers is not 
+		// recommended. Every time the GPU needs it, the upload heap will be marshalled 
+		// over. Please read up on Default Heap usage. An upload heap is used here for 
+		// code simplicity and because there are very few verts to actually transfer.
+		D3D12_HEAP_PROPERTIES uploadHeapProps = { D3D12_HEAP_TYPE_UPLOAD,
+										 D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+										 D3D12_MEMORY_POOL_UNKNOWN, 1u, 1u };
+		D3D12_RESOURCE_DESC uploadBufferDesc = { D3D12_RESOURCE_DIMENSION_BUFFER,
+												65536ull,
+												65536ull,
+												1u,
+												1,
+												1,
+												DXGI_FORMAT_UNKNOWN,
+												{1u, 0u},
+												D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+												D3D12_RESOURCE_FLAG_NONE };
+		D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
+		ThrowIfFailed(m_pd3dDevice->CreateCommittedResource(
+			&uploadHeapProps,
+			D3D12_HEAP_FLAG_NONE,
+			&resourceDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_vertexBuffer)));
+
+		// Copy the triangle data to the vertex buffer.
+		UINT8* pVertexDataBegin;
+		//CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+		D3D12_RANGE range{ 0, 0 };        // We do not intend to read from this resource on the CPU.
+		ThrowIfFailed(m_vertexBuffer->Map(0, &range, reinterpret_cast<void**>(&pVertexDataBegin)));
+		memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
+		m_vertexBuffer->Unmap(0, nullptr);
+
+		// Initialize the vertex buffer view.
+		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+		m_vertexBufferView.StrideInBytes = sizeof(Vertex);
+		m_vertexBufferView.SizeInBytes = vertexBufferSize;
+	}
+
+
 	if (m_pd3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)) != S_OK)
 		return false;
 
@@ -198,6 +253,11 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	m_pd3dCommandList->ClearRenderTargetView(m_mainRenderTargetDescriptor[backBufferIdx], clear_color_with_alpha, 0, NULL);
 	m_pd3dCommandList->OMSetRenderTargets(1, &m_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
 	m_pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dSrvDescHeap);
+
+	// Render triangle
+	m_pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pd3dCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	m_pd3dCommandList->DrawInstanced(3, 1, 0, 0);
 
 	// Have imgui backend render using command list
 	ui->RenderDrawData(m_pd3dCommandList);
