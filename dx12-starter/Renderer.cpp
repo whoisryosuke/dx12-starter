@@ -316,6 +316,13 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	UINT backBufferIdx = m_pSwapChain->GetCurrentBackBufferIndex();
 	frameCtx->CommandAllocator->Reset();
 
+	m_pd3dCommandList->Reset(frameCtx->CommandAllocator, m_pipelineState.Get());
+
+	// Set necessary state.
+	m_pd3dCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	m_pd3dCommandList->RSSetViewports(1, &m_viewport);
+	m_pd3dCommandList->RSSetScissorRects(1, &m_scissorRect);
+
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -323,7 +330,6 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	m_pd3dCommandList->Reset(frameCtx->CommandAllocator, m_pipelineState.Get());
 	m_pd3dCommandList->ResourceBarrier(1, &barrier);
 
 	// Render Dear ImGui graphics
@@ -333,18 +339,12 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	m_pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dSrvDescHeap);
 
 	// Have imgui backend render using command list
-	ui->RenderDrawData(m_pd3dCommandList.Get());
-
-	// Set necessary state.
-	m_pd3dCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
-	m_pd3dCommandList->RSSetViewports(1, &m_viewport);
-	m_pd3dCommandList->RSSetScissorRects(1, &m_scissorRect);
+	//ui->RenderDrawData(m_pd3dCommandList.Get());
 
 	// Render triangle
 	m_pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pd3dCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_pd3dCommandList->DrawInstanced(3, 1, 0, 0);
-
 	
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
