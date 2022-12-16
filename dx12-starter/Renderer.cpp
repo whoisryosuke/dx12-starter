@@ -1,5 +1,11 @@
 #include "Renderer.h"
 
+Renderer::Renderer(unsigned int width, unsigned int height):
+	m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
+	m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height))
+{
+}
+
 bool Renderer::Init(HWND hWnd)
 {
 
@@ -329,16 +335,21 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	// Have imgui backend render using command list
 	ui->RenderDrawData(m_pd3dCommandList.Get());
 
-	
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	m_pd3dCommandList->ResourceBarrier(1, &barrier);
-	m_pd3dCommandList->Close();
+	// Set necessary state.
+	m_pd3dCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	m_pd3dCommandList->RSSetViewports(1, &m_viewport);
+	m_pd3dCommandList->RSSetScissorRects(1, &m_scissorRect);
 
 	// Render triangle
 	m_pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pd3dCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_pd3dCommandList->DrawInstanced(3, 1, 0, 0);
+
+	
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	m_pd3dCommandList->ResourceBarrier(1, &barrier);
+	m_pd3dCommandList->Close();
 
 	// Execute the command list.
 	ID3D12CommandList* ppCommandLists[] = { m_pd3dCommandList.Get() };
@@ -359,6 +370,9 @@ void Renderer::HandleResize(int width, int height)
 
 	//_deviceContext->Flush();
 	//DestroySwapchainResources();
+
+	m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+	m_scissorRect = CD3DX12_RECT(0, 0, static_cast<LONG>(width), static_cast<LONG>(height));
 
 	m_pSwapChain->ResizeBuffers(
 		0,

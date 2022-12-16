@@ -5,7 +5,7 @@ App::App()
     // Create any new classes
     m_window_container = new Window();
     m_ui = new DX12Playground::UI();
-    m_renderer = new Renderer();
+    m_renderer = new Renderer(1280, 800);
 }
 
 /// <summary>

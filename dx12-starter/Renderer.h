@@ -74,6 +74,7 @@ inline void GetAssetsPath(_Out_writes_(pathSize) WCHAR* path, UINT pathSize)
 class Renderer
 {
 public:
+	Renderer(unsigned int width, unsigned int height);
 	bool Init(HWND hWnd);
 	void CreateRenderTarget();
 	void CleanupDevice();
@@ -87,6 +88,8 @@ public:
 	static void HandleResizeCallback(Renderer* renderer, int width, int height);
 
 
+	CD3DX12_VIEWPORT m_viewport;
+	CD3DX12_RECT m_scissorRect;
 	FrameContext                 m_frameContext[NUM_FRAMES_IN_FLIGHT] = {};
 	UINT                         m_frameIndex = 0;
 	ID3D12Device* m_pd3dDevice = nullptr;
