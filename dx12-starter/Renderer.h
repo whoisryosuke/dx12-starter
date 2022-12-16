@@ -90,7 +90,7 @@ public:
 	ComPtr<ID3D12PipelineState> m_pipelineState;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ID3D12CommandQueue* m_pd3dCommandQueue = NULL;
-	ID3D12GraphicsCommandList* m_pd3dCommandList = NULL;
+	ComPtr<ID3D12GraphicsCommandList> m_pd3dCommandList = NULL;
 	ID3D12Fence* m_fence = NULL;
 	HANDLE                       m_fenceEvent = NULL;
 	UINT64                       m_fenceLastSignaledValue = 0;

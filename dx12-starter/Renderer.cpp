@@ -7,24 +7,6 @@ bool Renderer::Init(HWND hWnd)
 	GetAssetsPath(assetsPath, _countof(assetsPath));
 	m_assetsPath = assetsPath;
 
-	// Setup swap chain
-	DXGI_SWAP_CHAIN_DESC1 sd;
-	{
-		ZeroMemory(&sd, sizeof(sd));
-		sd.BufferCount = NUM_BACK_BUFFERS;
-		sd.Width = 0;
-		sd.Height = 0;
-		sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		sd.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-		sd.SampleDesc.Count = 1;
-		sd.SampleDesc.Quality = 0;
-		sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-		sd.Scaling = DXGI_SCALING_STRETCH;
-		sd.Stereo = FALSE;
-	}
-
 	// [DEBUG] Enable debug interface
 #ifdef DX12_ENABLE_DEBUG_LAYER
 	ID3D12Debug* pdx12Debug = NULL;
@@ -87,6 +69,40 @@ bool Renderer::Init(HWND hWnd)
 			return false;
 	}
 
+	// Setup swap chain
+	DXGI_SWAP_CHAIN_DESC1 sd;
+	{
+		ZeroMemory(&sd, sizeof(sd));
+		sd.BufferCount = NUM_BACK_BUFFERS;
+		sd.Width = 0;
+		sd.Height = 0;
+		sd.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		sd.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+		sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		sd.SampleDesc.Count = 1;
+		sd.SampleDesc.Quality = 0;
+		sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+		sd.Scaling = DXGI_SCALING_STRETCH;
+		sd.Stereo = FALSE;
+	}
+
+	// Setup factory and swap chain
+	{
+		IDXGIFactory4* dxgiFactory = NULL;
+		IDXGISwapChain1* swapChain1 = NULL;
+		if (CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)) != S_OK)
+			return false;
+		if (dxgiFactory->CreateSwapChainForHwnd(m_pd3dCommandQueue, hWnd, &sd, NULL, NULL, &swapChain1) != S_OK)
+			return false;
+		if (swapChain1->QueryInterface(IID_PPV_ARGS(&m_pSwapChain)) != S_OK)
+			return false;
+		swapChain1->Release();
+		dxgiFactory->Release();
+		m_pSwapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
+		m_hSwapChainWaitableObject = m_pSwapChain->GetFrameLatencyWaitableObject();
+	}
+
 	for (UINT i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
 		if (m_pd3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_frameContext[i].CommandAllocator)) != S_OK)
 			return false;
@@ -102,6 +118,10 @@ bool Renderer::Init(HWND hWnd)
 		ThrowIfFailed(m_pd3dDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 	}
 
+	// Create a RTV for each frame in our back buffer
+	CreateRenderTarget();
+
+	// Load assets
 	// Create the pipeline state, which includes compiling and loading shaders.
 	{
 		ComPtr<ID3DBlob> vertexShader;
@@ -143,7 +163,7 @@ bool Renderer::Init(HWND hWnd)
 	}
 
 
-	if (m_pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_frameContext[0].CommandAllocator, NULL, IID_PPV_ARGS(&m_pd3dCommandList)) != S_OK ||
+	if (m_pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_frameContext[0].CommandAllocator, m_pipelineState.Get(), IID_PPV_ARGS(&m_pd3dCommandList)) != S_OK ||
 		m_pd3dCommandList->Close() != S_OK)
 		return false;
 
@@ -209,27 +229,16 @@ bool Renderer::Init(HWND hWnd)
 	if (m_fenceEvent == NULL)
 		return false;
 
-	{
-		IDXGIFactory4* dxgiFactory = NULL;
-		IDXGISwapChain1* swapChain1 = NULL;
-		if (CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)) != S_OK)
-			return false;
-		if (dxgiFactory->CreateSwapChainForHwnd(m_pd3dCommandQueue, hWnd, &sd, NULL, NULL, &swapChain1) != S_OK)
-			return false;
-		if (swapChain1->QueryInterface(IID_PPV_ARGS(&m_pSwapChain)) != S_OK)
-			return false;
-		swapChain1->Release();
-		dxgiFactory->Release();
-		m_pSwapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
-		m_hSwapChainWaitableObject = m_pSwapChain->GetFrameLatencyWaitableObject();
-	}
 
-	CreateRenderTarget();
 	return true;
 }
 
+/// <summary>
+/// Create frame resources (aka render target view)
+/// </summary>
 void Renderer::CreateRenderTarget()
 {
+	// Create a Render Target View (RTV) for each frame
 	for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
 	{
 		ID3D12Resource* pBackBuffer = NULL;
@@ -247,7 +256,7 @@ void Renderer::CleanupDevice()
 	for (UINT i = 0; i < NUM_FRAMES_IN_FLIGHT; i++)
 		if (m_frameContext[i].CommandAllocator) { m_frameContext[i].CommandAllocator->Release(); m_frameContext[i].CommandAllocator = NULL; }
 	if (m_pd3dCommandQueue) { m_pd3dCommandQueue->Release(); m_pd3dCommandQueue = NULL; }
-	if (m_pd3dCommandList) { m_pd3dCommandList->Release(); m_pd3dCommandList = NULL; }
+	if (m_pd3dCommandList) { m_pd3dCommandList->Release(); m_pd3dCommandList = nullptr; }
 	if (m_pd3dRtvDescHeap) { m_pd3dRtvDescHeap->Release(); m_pd3dRtvDescHeap = NULL; }
 	if (m_pd3dSrvDescHeap) { m_pd3dSrvDescHeap->Release(); m_pd3dSrvDescHeap = NULL; }
 	if (m_fence) { m_fence->Release(); m_fence = NULL; }
@@ -302,7 +311,7 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	m_pd3dCommandList->Reset(frameCtx->CommandAllocator, NULL);
+	m_pd3dCommandList->Reset(frameCtx->CommandAllocator, m_pipelineState.Get());
 	m_pd3dCommandList->ResourceBarrier(1, &barrier);
 
 	// Render Dear ImGui graphics
@@ -311,20 +320,24 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	m_pd3dCommandList->OMSetRenderTargets(1, &m_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
 	m_pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dSrvDescHeap);
 
-	// Render triangle
-	m_pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_pd3dCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_pd3dCommandList->DrawInstanced(3, 1, 0, 0);
-
 	// Have imgui backend render using command list
-	ui->RenderDrawData(m_pd3dCommandList);
+	ui->RenderDrawData(m_pd3dCommandList.Get());
+
 	
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	m_pd3dCommandList->ResourceBarrier(1, &barrier);
 	m_pd3dCommandList->Close();
 
-	m_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&m_pd3dCommandList);
+	// Render triangle
+	m_pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pd3dCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	m_pd3dCommandList->DrawInstanced(3, 1, 0, 0);
+
+	// Execute the command list.
+	ID3D12CommandList* ppCommandLists[] = { m_pd3dCommandList.Get() };
+	m_pd3dCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+	//m_pd3dCommandQueue->ExecuteCommandLists(1, (ID3D12CommandList* const*)&m_pd3dCommandList.Get());
 
 	m_pSwapChain->Present(1, 0); // Present with vsync
 	//m_pSwapChain->Present(0, 0); // Present without vsync
