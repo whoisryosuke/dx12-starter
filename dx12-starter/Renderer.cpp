@@ -338,13 +338,13 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	m_pd3dCommandList->OMSetRenderTargets(1, &m_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
 	m_pd3dCommandList->SetDescriptorHeaps(1, &m_pd3dSrvDescHeap);
 
-	// Have imgui backend render using command list
-	//ui->RenderDrawData(m_pd3dCommandList.Get());
-
 	// Render triangle
 	m_pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pd3dCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_pd3dCommandList->DrawInstanced(3, 1, 0, 0);
+
+	// Have imgui backend render using command list
+	ui->RenderDrawData(m_pd3dCommandList.Get());
 	
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
