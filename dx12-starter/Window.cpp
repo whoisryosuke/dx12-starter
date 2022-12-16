@@ -1,4 +1,5 @@
 #include "Window.h"
+#include <imgui.h>
 
 Window::Window()
 {
@@ -42,6 +43,20 @@ bool Window::Init()
     const int32_t windowTop = videoMode->height / 2 - height / 2;
     glfwSetWindowPos(m_window, windowLeft, windowTop);
 
+
+    glfwSetMouseButtonCallback(
+        m_window,
+        [](auto* window, int button, int action, int mods)
+        {
+            auto& io = ImGui::GetIO();
+            const int idx = button == GLFW_MOUSE_BUTTON_LEFT ? 0 : button == GLFW_MOUSE_BUTTON_RIGHT ? 2 : 1;
+            io.MouseDown[idx] = action == GLFW_PRESS;
+
+            // Save mouse state somewhere if needed
+            //if (button == GLFW_MOUSE_BUTTON_LEFT)
+            //    mouseState.pressedLeft = action == GLFW_PRESS;
+        }
+    );
 
     return true;
 }
