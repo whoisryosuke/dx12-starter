@@ -1,6 +1,7 @@
 #pragma once
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <dxgi1_6.h>
 #include <d3dcompiler.h>
 #include <wrl/client.h>
 #include <wtypes.h>
@@ -20,6 +21,9 @@ using Microsoft::WRL::ComPtr;
 #pragma comment(lib, "dxguid.lib")
 #endif
 #include "UI.h"
+
+#define SUCCEEDED(hr)   (((HRESULT)(hr)) >= 0)
+#define FAILED(hr)      (((HRESULT)(hr)) < 0)
 
 static int const                    NUM_BACK_BUFFERS = 3;
 static int const                    NUM_FRAMES_IN_FLIGHT = 3;
@@ -77,6 +81,7 @@ public:
 	void WaitForLastSubmittedFrame();
 	FrameContext* WaitForNextFrameResources();
 	std::wstring GetAssetFullPath(LPCWSTR assetName);
+	void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter);
 	void RenderUI(DX12Playground::UI* ui);
 	void HandleResize(int width, int height);
 	static void HandleResizeCallback(Renderer* renderer, int width, int height);

@@ -14,9 +14,18 @@ bool Renderer::Init(HWND hWnd)
 		pdx12Debug->EnableDebugLayer();
 #endif
 
+	// Setup factory
+	IDXGIFactory4* dxgiFactory = NULL;
+	if (CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)) != S_OK)
+		return false;
+
 	// Create device
+	// Get the hardware adapter that supports DX12 (or return null)
+	// DX12 sample has an option for "warp device"? Maybe consider that.
+	ComPtr<IDXGIAdapter1> hardwareAdapter;
+	GetHardwareAdapter(dxgiFactory, &hardwareAdapter, false);
 	D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
-	if (D3D12CreateDevice(NULL, featureLevel, IID_PPV_ARGS(&m_pd3dDevice)) != S_OK)
+	if (D3D12CreateDevice(hardwareAdapter.Get(), featureLevel, IID_PPV_ARGS(&m_pd3dDevice)) != S_OK)
 		return false;
 
 	// [DEBUG] Setup debug interface to break on any warnings/errors
@@ -87,12 +96,9 @@ bool Renderer::Init(HWND hWnd)
 		sd.Stereo = FALSE;
 	}
 
-	// Setup factory and swap chain
+	// Setup swap chain
 	{
-		IDXGIFactory4* dxgiFactory = NULL;
 		IDXGISwapChain1* swapChain1 = NULL;
-		if (CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)) != S_OK)
-			return false;
 		if (dxgiFactory->CreateSwapChainForHwnd(m_pd3dCommandQueue, hWnd, &sd, NULL, NULL, &swapChain1) != S_OK)
 			return false;
 		if (swapChain1->QueryInterface(IID_PPV_ARGS(&m_pSwapChain)) != S_OK)
@@ -396,4 +402,73 @@ FrameContext* Renderer::WaitForNextFrameResources()
 std::wstring Renderer::GetAssetFullPath(LPCWSTR assetName)
 {
 	return m_assetsPath + assetName;
+}
+
+
+// Helper function for acquiring the first available hardware adapter that supports Direct3D 12.
+// If no such adapter can be found, *ppAdapter will be set to nullptr.
+//_Use_decl_annotations_
+void Renderer::GetHardwareAdapter(
+	IDXGIFactory1* pFactory,
+	IDXGIAdapter1** ppAdapter,
+	bool requestHighPerformanceAdapter)
+{
+	*ppAdapter = nullptr;
+
+	ComPtr<IDXGIAdapter1> adapter;
+
+	ComPtr<IDXGIFactory6> factory6;
+	if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
+	{
+		for (
+			UINT adapterIndex = 0;
+			SUCCEEDED(factory6->EnumAdapterByGpuPreference(
+				adapterIndex,
+				requestHighPerformanceAdapter == true ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED,
+				IID_PPV_ARGS(&adapter)));
+			++adapterIndex)
+		{
+			DXGI_ADAPTER_DESC1 desc;
+			adapter->GetDesc1(&desc);
+
+			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+			{
+				// Don't select the Basic Render Driver adapter.
+				// If you want a software adapter, pass in "/warp" on the command line.
+				continue;
+			}
+
+			// Check to see whether the adapter supports Direct3D 12, but don't create the
+			// actual device yet.
+			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+			{
+				break;
+			}
+		}
+	}
+
+	if (adapter.Get() == nullptr)
+	{
+		for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
+		{
+			DXGI_ADAPTER_DESC1 desc;
+			adapter->GetDesc1(&desc);
+
+			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+			{
+				// Don't select the Basic Render Driver adapter.
+				// If you want a software adapter, pass in "/warp" on the command line.
+				continue;
+			}
+
+			// Check to see whether the adapter supports Direct3D 12, but don't create the
+			// actual device yet.
+			if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
+			{
+				break;
+			}
+		}
+	}
+
+	*ppAdapter = adapter.Detach();
 }
