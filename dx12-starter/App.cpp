@@ -33,7 +33,7 @@ void App::Run()
 bool App::Init()
 {
     // Initalize the window here and hydrate 
-    m_window_container->Init();
+    m_window_container->Init(1280, 800);
     // Set a pointer to this Window class in GLFW
     // Lets us access the Window class methods in callbacks
     // @see: glfw.org/faq.html#216---how-do-i-use-c-methods-as-callbacks

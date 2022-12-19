@@ -447,6 +447,7 @@ void Renderer::HandleResize(int width, int height)
 		0);
 
 	//CreateSwapchainResources();
+	//CreateRenderTarget();
 }
 
 void Renderer::HandleResizeCallback(Renderer* renderer, int width, int height)
@@ -570,3 +571,4 @@ void Renderer::GetHardwareAdapter(
 
 	*ppAdapter = adapter.Detach();
 }
+

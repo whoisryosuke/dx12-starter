@@ -9,7 +9,7 @@ Window::Window()
 /// Initializes and opens a native Window context using GLFW. A ref to window context is stored as class property (`m_window`).
 /// </summary>
 /// <returns></returns>
-bool Window::Init()
+bool Window::Init(int32_t width, int32_t height)
 {
     if (!glfwInit())
     {
@@ -17,10 +17,12 @@ bool Window::Init()
         return -1;
     }
 
-    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode* videoMode = glfwGetVideoMode(primaryMonitor);
-    const int32_t width = static_cast<int32_t>(videoMode->width * 0.9f);
-    const int32_t height = static_cast<int32_t>(videoMode->height * 0.9f);
+    // This is how you can get the user's monitor width/height. 
+    // Here we do 90% of the max resolution (e.g. 90% of 1920x1080)
+    //GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    //const GLFWvidmode* videoMode = glfwGetVideoMode(primaryMonitor);
+    //const int32_t width = static_cast<int32_t>(videoMode->width * 0.9f);
+    //const int32_t height = static_cast<int32_t>(videoMode->height * 0.9f);
 
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -39,8 +41,8 @@ bool Window::Init()
         return false;
     }
 
-    const int32_t windowLeft = videoMode->width / 2 - width / 2;
-    const int32_t windowTop = videoMode->height / 2 - height / 2;
+    const int32_t windowLeft = width / 2 - width / 2;
+    const int32_t windowTop = height / 2 - height / 2;
     glfwSetWindowPos(m_window, windowLeft, windowTop);
 
 

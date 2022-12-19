@@ -7,7 +7,7 @@ class Window
 {
 public:
 	Window();
-	bool Init();
+	bool Init(int32_t width, int32_t height);
 	void Terminate();
 	void Update();
 	bool ShouldLoop();
