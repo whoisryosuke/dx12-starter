@@ -134,7 +134,7 @@ bool Renderer::Init(HWND hWnd)
 		if (m_pd3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_frameContext[i].CommandAllocator)) != S_OK)
 			return false;
 
-	// Create a root signature consisting of a descriptor table with a single CBV.
+	// Create a root signature consisting of a descriptor table with a single CBV (constant buffer)
 	{
 		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 
@@ -149,7 +149,10 @@ bool Renderer::Init(HWND hWnd)
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
 
+		// Here is where we "register" our constant buffer to an index (e.g. `register(b0)`)
 		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		// We setup a descriptor table with our descriptor ranges (containing CBVs) 
+		// and set the "visibility" of properties to the vertex shader
 		rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
 
 		// Allow input layout and deny uneccessary access to certain pipeline stages.
@@ -236,19 +239,7 @@ bool Renderer::Init(HWND hWnd)
 		// recommended. Every time the GPU needs it, the upload heap will be marshalled 
 		// over. Please read up on Default Heap usage. An upload heap is used here for 
 		// code simplicity and because there are very few verts to actually transfer.
-		D3D12_HEAP_PROPERTIES uploadHeapProps = { D3D12_HEAP_TYPE_UPLOAD,
-										 D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-										 D3D12_MEMORY_POOL_UNKNOWN, 1u, 1u };
-		D3D12_RESOURCE_DESC uploadBufferDesc = { D3D12_RESOURCE_DIMENSION_BUFFER,
-												65536ull,
-												65536ull,
-												1u,
-												1,
-												1,
-												DXGI_FORMAT_UNKNOWN,
-												{1u, 0u},
-												D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-												D3D12_RESOURCE_FLAG_NONE };
+		D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 		D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
 		ThrowIfFailed(m_pd3dDevice->CreateCommittedResource(
 			&uploadHeapProps,
@@ -464,6 +455,7 @@ void Renderer::HandleResizeCallback(Renderer* renderer, int width, int height)
 
 void Renderer::OnUpdate()
 {
+	// Move the triangle right by updating the "offset" value inside the constant buffer
 	const float translationSpeed = 0.0005f;
 	const float offsetBounds = 1.25f;
 
