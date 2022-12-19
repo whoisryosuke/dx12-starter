@@ -50,7 +50,6 @@ bool Window::Init()
         {
             auto& io = ImGui::GetIO();
             const int idx = button == GLFW_MOUSE_BUTTON_LEFT ? 0 : button == GLFW_MOUSE_BUTTON_RIGHT ? 2 : 1;
-            io.MouseDown[idx] = action == GLFW_PRESS;
 
             // Save mouse state somewhere if needed
             //if (button == GLFW_MOUSE_BUTTON_LEFT)
