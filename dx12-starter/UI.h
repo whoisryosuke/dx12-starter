@@ -1,6 +1,6 @@
 #pragma once
 #include "imgui.h"
-#include "imgui_impl_win32.h"
+#include "imgui_impl_glfw.h"
 #include "imgui_impl_dx12.h"
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -14,7 +14,7 @@ namespace DX12Playground {
 class UI
 {
 public:
-	bool Init(HWND window, ID3D12Device* device, ID3D12DescriptorHeap* srvHeap);
+	bool Init(GLFWwindow* window, ID3D12Device* device, ID3D12DescriptorHeap* srvHeap);
 	void Update();
 	void Render();
 	void RenderDrawData(ID3D12GraphicsCommandList* m_pd3dCommandList);

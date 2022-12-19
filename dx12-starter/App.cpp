@@ -53,7 +53,7 @@ bool App::Init()
     }
 
     // Initialize the UI (aka imgui). Requires the window context + DX12 device.
-    m_ui->Init(hwnd, m_renderer->m_pd3dDevice, m_renderer->m_pd3dSrvDescHeap);
+    m_ui->Init(m_window_container->m_window, m_renderer->m_pd3dDevice, m_renderer->m_pd3dSrvDescHeap);
 
 	return true;
 }

@@ -5,7 +5,7 @@
 static int const                    NUM_FRAMES_IN_FLIGHT = 3;
 
 namespace DX12Playground {
-    bool UI::Init(HWND hwnd, ID3D12Device* device, ID3D12DescriptorHeap* srvHeap)
+    bool UI::Init(GLFWwindow* window, ID3D12Device* device, ID3D12DescriptorHeap* srvHeap)
     {
 
         // Setup Dear ImGui context
@@ -20,7 +20,7 @@ namespace DX12Playground {
         //ImGui::StyleColorsLight();
 
         // Setup Platform/Renderer backends
-        ImGui_ImplWin32_Init(hwnd);
+        ImGui_ImplGlfw_InitForOther(window, true);
         ImGui_ImplDX12_Init(device, NUM_FRAMES_IN_FLIGHT,
             DXGI_FORMAT_R8G8B8A8_UNORM, srvHeap,
             srvHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -55,7 +55,7 @@ namespace DX12Playground {
 
         // Start the Dear ImGui frame
         ImGui_ImplDX12_NewFrame();
-        ImGui_ImplWin32_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         ImGui::ShowDemoWindow(&show_demo_window);
 
@@ -91,7 +91,7 @@ namespace DX12Playground {
     {
         // Cleanup
         ImGui_ImplDX12_Shutdown();
-        ImGui_ImplWin32_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
 }
