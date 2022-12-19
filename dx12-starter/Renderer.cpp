@@ -464,7 +464,7 @@ void Renderer::HandleResizeCallback(Renderer* renderer, int width, int height)
 
 void Renderer::OnUpdate()
 {
-	const float translationSpeed = 0.005f;
+	const float translationSpeed = 0.0005f;
 	const float offsetBounds = 1.25f;
 
 	m_constantBufferData.offset.x += translationSpeed;
