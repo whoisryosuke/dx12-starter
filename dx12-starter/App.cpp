@@ -30,7 +30,6 @@ void App::Run()
 
     Exit();
 }
-
 bool App::Init()
 {
     // Initalize the window here and hydrate 
@@ -67,6 +66,14 @@ void App::Render()
 void App::Update()
 {
     m_window_container->Update();
+
+    // Check if there were changes to Constant Buffer properties in UI
+    if (m_ui->should_update_cb) {
+        m_renderer->m_constantBufferData.offset.x = m_ui->offset.x;
+        m_renderer->UpdateCB();
+        m_ui->should_update_cb = false;
+    }
+
     m_renderer->OnUpdate();
 }
 

@@ -74,6 +74,16 @@ inline void GetAssetsPath(_Out_writes_(pathSize) WCHAR* path, UINT pathSize)
 class Renderer
 {
 public:
+	// Structs
+	// Constant Buffers (aka "uniforms")
+	struct SceneConstantBuffer
+	{
+		DirectX::XMFLOAT4 offset;
+		float padding[60]; // Padding so the constant buffer is 256-byte aligned.
+	};
+	static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+
+
 	Renderer(unsigned int width, unsigned int height);
 	bool Init(HWND hWnd);
 	void CreateRenderTarget();
@@ -87,15 +97,7 @@ public:
 	void HandleResize(int width, int height);
 	static void HandleResizeCallback(Renderer* renderer, int width, int height);
 	void OnUpdate();
-
-	// Structs
-	// Constant Buffers (aka "uniforms")
-	struct SceneConstantBuffer
-	{
-		DirectX::XMFLOAT4 offset;
-		float padding[60]; // Padding so the constant buffer is 256-byte aligned.
-	};
-	static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+	void UpdateCB();
 
 
 	CD3DX12_VIEWPORT m_viewport;

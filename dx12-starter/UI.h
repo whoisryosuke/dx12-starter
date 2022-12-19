@@ -20,7 +20,9 @@ public:
 	void RenderDrawData(ID3D12GraphicsCommandList* m_pd3dCommandList);
 	void Terminate();
 
+	bool should_update_cb;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	ImVec4 offset = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 };
 
 }

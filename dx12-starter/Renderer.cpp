@@ -457,14 +457,19 @@ void Renderer::HandleResizeCallback(Renderer* renderer, int width, int height)
 void Renderer::OnUpdate()
 {
 	// Move the triangle right by updating the "offset" value inside the constant buffer
-	const float translationSpeed = 0.0005f;
-	const float offsetBounds = 1.25f;
+	//const float translationSpeed = 0.0005f;
+	//const float offsetBounds = 1.25f;
 
-	m_constantBufferData.offset.x += translationSpeed;
-	if (m_constantBufferData.offset.x > offsetBounds)
-	{
-		m_constantBufferData.offset.x = -offsetBounds;
-	}
+	//m_constantBufferData.offset.x += translationSpeed;
+	//if (m_constantBufferData.offset.x > offsetBounds)
+	//{
+	//	m_constantBufferData.offset.x = -offsetBounds;
+	//}
+	//memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+}
+
+void Renderer::UpdateCB()
+{
 	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 }
 
