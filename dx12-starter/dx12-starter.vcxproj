@@ -175,6 +175,9 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)\%(Identity)</Outputs>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\fonts\Roboto-Medium.ttf" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
