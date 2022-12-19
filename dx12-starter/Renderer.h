@@ -86,6 +86,16 @@ public:
 	void RenderUI(DX12Playground::UI* ui);
 	void HandleResize(int width, int height);
 	static void HandleResizeCallback(Renderer* renderer, int width, int height);
+	void OnUpdate();
+
+	// Structs
+	// Constant Buffers (aka "uniforms")
+	struct SceneConstantBuffer
+	{
+		DirectX::XMFLOAT4 offset;
+		float padding[60]; // Padding so the constant buffer is 256-byte aligned.
+	};
+	static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 
 
 	CD3DX12_VIEWPORT m_viewport;
@@ -95,6 +105,7 @@ public:
 	ID3D12Device* m_pd3dDevice = nullptr;
 	ID3D12DescriptorHeap* m_pd3dRtvDescHeap = NULL;
 	ID3D12DescriptorHeap* m_pd3dSrvDescHeap = NULL;
+	ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
 	ComPtr<ID3D12PipelineState> m_pipelineState;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ID3D12CommandQueue* m_pd3dCommandQueue = NULL;
@@ -110,6 +121,10 @@ public:
 	// App resources.
 	ID3D12Resource* m_vertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+	ComPtr<ID3D12Resource> m_constantBuffer;
+	SceneConstantBuffer m_constantBufferData;
+	UINT8* m_pCbvDataBegin;
+
 
 private:
 	// Root assets path.

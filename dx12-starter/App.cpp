@@ -67,6 +67,7 @@ void App::Render()
 void App::Update()
 {
     m_window_container->Update();
+    m_renderer->OnUpdate();
 }
 
 void App::Exit()

@@ -2,7 +2,9 @@
 
 Renderer::Renderer(unsigned int width, unsigned int height):
 	m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
-	m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height))
+	m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
+	m_pCbvDataBegin(nullptr),
+	m_constantBufferData{}
 {
 }
 
@@ -48,6 +50,7 @@ bool Renderer::Init(HWND hWnd)
 	}
 #endif
 
+	// Create the render target descriptor heap
 	{
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
@@ -73,6 +76,18 @@ bool Renderer::Init(HWND hWnd)
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		if (m_pd3dDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_pd3dSrvDescHeap)) != S_OK)
 			return false;
+	}
+
+	// Create the constant buffer descriptor heap
+	{
+		// Describe and create a constant buffer view (CBV) descriptor heap.
+		// Flags indicate that this descriptor heap can be bound to the pipeline 
+		// and that descriptors contained in it can be referenced by a root table.
+		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
+		cbvHeapDesc.NumDescriptors = 1;
+		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		ThrowIfFailed(m_pd3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
 	}
 
 	{
@@ -119,14 +134,38 @@ bool Renderer::Init(HWND hWnd)
 		if (m_pd3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_frameContext[i].CommandAllocator)) != S_OK)
 			return false;
 
-	// Create an empty root signature.
+	// Create a root signature consisting of a descriptor table with a single CBV.
 	{
-		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+
+		// This is the highest version the sample supports. If CheckFeatureSupport succeeds, the HighestVersion returned will not be greater than this.
+		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+		if (FAILED(m_pd3dDevice->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+		{
+			featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+		}
+
+		CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+
+		// Allow input layout and deny uneccessary access to certain pipeline stages.
+		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+		CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+		rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
 
 		ComPtr<ID3DBlob> signature;
 		ComPtr<ID3DBlob> error;
-		ThrowIfFailed(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+		ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
 		ThrowIfFailed(m_pd3dDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
 	}
 
@@ -233,7 +272,35 @@ bool Renderer::Init(HWND hWnd)
 		m_vertexBufferView.SizeInBytes = vertexBufferSize;
 	}
 
+	// Create the constant buffer.
+	{
+		const UINT constantBufferSize = sizeof(SceneConstantBuffer);    // CB size is required to be 256-byte aligned.
 
+		auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		auto heapSize = CD3DX12_RESOURCE_DESC::Buffer(constantBufferSize);
+
+		ThrowIfFailed(m_pd3dDevice->CreateCommittedResource(
+			&heapProperties,
+			D3D12_HEAP_FLAG_NONE,
+			&heapSize,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_constantBuffer)));
+
+		// Describe and create a constant buffer view.
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+		cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
+		cbvDesc.SizeInBytes = constantBufferSize;
+		m_pd3dDevice->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+		// Map and initialize the constant buffer. We don't unmap this until the
+		// app closes. Keeping things mapped for the lifetime of the resource is okay.
+		CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+		ThrowIfFailed(m_constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
+		memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
+	}
+
+	// Create synchronization objects and wait until assets have been uploaded to the GPU.
 	if (m_pd3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)) != S_OK)
 		return false;
 
@@ -320,6 +387,12 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 
 	// Set necessary state.
 	m_pd3dCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	
+	// Setup constant buffer
+	ID3D12DescriptorHeap* ppHeaps[] = { m_cbvHeap.Get() };
+	m_pd3dCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	m_pd3dCommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+
 	m_pd3dCommandList->RSSetViewports(1, &m_viewport);
 	m_pd3dCommandList->RSSetScissorRects(1, &m_scissorRect);
 
@@ -387,6 +460,19 @@ void Renderer::HandleResize(int width, int height)
 void Renderer::HandleResizeCallback(Renderer* renderer, int width, int height)
 {
 	return reinterpret_cast<Renderer*>(renderer)->HandleResize(width, height);
+}
+
+void Renderer::OnUpdate()
+{
+	const float translationSpeed = 0.005f;
+	const float offsetBounds = 1.25f;
+
+	m_constantBufferData.offset.x += translationSpeed;
+	if (m_constantBufferData.offset.x > offsetBounds)
+	{
+		m_constantBufferData.offset.x = -offsetBounds;
+	}
+	memcpy(m_pCbvDataBegin, &m_constantBufferData, sizeof(m_constantBufferData));
 }
 
 FrameContext* Renderer::WaitForNextFrameResources()
