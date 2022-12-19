@@ -150,6 +150,7 @@ bool Renderer::Init(HWND hWnd)
 		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
 
 		// Here is where we "register" our constant buffer to an index (e.g. `register(b0)`)
+		// The baseShaderRegister property (third one) is the index
 		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 		// We setup a descriptor table with our descriptor ranges (containing CBVs) 
 		// and set the "visibility" of properties to the vertex shader
