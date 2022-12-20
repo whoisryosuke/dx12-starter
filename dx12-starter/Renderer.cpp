@@ -102,6 +102,8 @@ bool Renderer::Init(HWND hWnd)
 	// Setup swap chain
 	DXGI_SWAP_CHAIN_DESC1 sd;
 	{
+		EASY_BLOCK("Create swap chain");
+
 		ZeroMemory(&sd, sizeof(sd));
 		sd.BufferCount = NUM_BACK_BUFFERS;
 		sd.Width = 0;
@@ -115,10 +117,7 @@ bool Renderer::Init(HWND hWnd)
 		sd.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
 		sd.Scaling = DXGI_SCALING_STRETCH;
 		sd.Stereo = FALSE;
-	}
 
-	// Setup swap chain
-	{
 		IDXGISwapChain1* swapChain1 = NULL;
 		if (dxgiFactory->CreateSwapChainForHwnd(m_pd3dCommandQueue, hWnd, &sd, NULL, NULL, &swapChain1) != S_OK)
 			return false;
@@ -222,9 +221,10 @@ bool Renderer::Init(HWND hWnd)
 		m_pd3dCommandList->Close() != S_OK)
 		return false;
 
-
 	// Create the vertex buffer.
 	{
+		EASY_BLOCK("Create vertex buffer");
+
 		// Define the geometry for a triangle.
 		float m_aspectRatio = 1.0f;
 		Vertex triangleVertices[] =
@@ -262,10 +262,12 @@ bool Renderer::Init(HWND hWnd)
 		m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 		m_vertexBufferView.StrideInBytes = sizeof(Vertex);
 		m_vertexBufferView.SizeInBytes = vertexBufferSize;
+
 	}
 
 	// Create the constant buffer.
 	{
+		EASY_BLOCK("Create constant buffer");
 		const UINT constantBufferSize = sizeof(SceneConstantBuffer);    // CB size is required to be 256-byte aligned.
 
 		auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -310,6 +312,7 @@ bool Renderer::Init(HWND hWnd)
 void Renderer::CreateRenderTarget()
 {
 	// Create a Render Target View (RTV) for each frame
+	EASY_BLOCK("Create render target views");
 	for (UINT i = 0; i < NUM_BACK_BUFFERS; i++)
 	{
 		ID3D12Resource* pBackBuffer = NULL;

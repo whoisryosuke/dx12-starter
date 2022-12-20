@@ -9,6 +9,7 @@
 #include <DirectXColors.h>
 #include <DirectXMath.h>
 #include "d3dx12.h"
+#include <easy/profiler.h>
 
 using Microsoft::WRL::ComPtr;
 
