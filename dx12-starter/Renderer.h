@@ -36,7 +36,8 @@ struct FrameContext
 struct Vertex
 {
 	DirectX::XMFLOAT3		 position;
-	DirectX::XMFLOAT4		 color;
+	DirectX::XMFLOAT2		 tex_coords;
+	DirectX::XMFLOAT3		 normals;
 };
 
 
