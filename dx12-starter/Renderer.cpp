@@ -227,7 +227,7 @@ bool Renderer::Init(HWND hWnd)
 	{
 		// Define the geometry for a triangle.
 		float m_aspectRatio = 1.0f;
-		Vertex triangleVertices[] =
+		Vertex cubeVertices[] =
 		{
 			{{1.0f, -1.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
 			{{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
@@ -267,7 +267,7 @@ bool Renderer::Init(HWND hWnd)
 			{{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
 		};
 
-		const UINT vertexBufferSize = sizeof(triangleVertices);
+		const UINT vertexBufferSize = sizeof(cubeVertices);
 
 		// Note: using upload heaps to transfer static data like vert buffers is not 
 		// recommended. Every time the GPU needs it, the upload heap will be marshalled 
@@ -283,12 +283,12 @@ bool Renderer::Init(HWND hWnd)
 			nullptr,
 			IID_PPV_ARGS(&m_vertexBuffer)));
 
-		// Copy the triangle data to the vertex buffer.
+		// Copy the mesh data to the vertex buffer.
 		UINT8* pVertexDataBegin;
 		//CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
 		D3D12_RANGE range{ 0, 0 };        // We do not intend to read from this resource on the CPU.
 		ThrowIfFailed(m_vertexBuffer->Map(0, &range, reinterpret_cast<void**>(&pVertexDataBegin)));
-		memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
+		memcpy(pVertexDataBegin, cubeVertices, sizeof(cubeVertices));
 		m_vertexBuffer->Unmap(0, nullptr);
 
 		// Initialize the vertex buffer view.
