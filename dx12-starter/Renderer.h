@@ -9,6 +9,10 @@
 #include <DirectXColors.h>
 #include <DirectXMath.h>
 #include "d3dx12.h"
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/cimport.h>
+#include <assimp/version.h>
 
 using Microsoft::WRL::ComPtr;
 
