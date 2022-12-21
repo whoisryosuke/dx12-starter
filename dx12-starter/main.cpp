@@ -5,8 +5,6 @@
 #include <thread>
 #include "App.h"
 
-#define BUILD_WITH_EASY_PROFILER = 1
-
 int main(int argc, char* argv[])
 {
     EASY_MAIN_THREAD;
