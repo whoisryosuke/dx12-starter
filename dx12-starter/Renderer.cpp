@@ -229,24 +229,27 @@ bool Renderer::Init(HWND hWnd)
 
 	if (!scene || !scene->HasMeshes())
 	{
-		printf("Unable to load data/rubber_duck/scene.gltf\n");
-		exit(255);
+		printf("Unable to load assets/models/Plane-Tris-Textured.gltf\n");
+		//exit(255);
 	}
 
-	const aiMesh* mesh = scene->mMeshes[0];
-	std::vector<Vertex> positions;
-	for (unsigned int i = 0; i != mesh->mNumFaces; i++)
+	if (scene && scene->HasMeshes())
 	{
-		const aiFace& face = mesh->mFaces[i];
-		const unsigned int idx[3] = { face.mIndices[0], face.mIndices[1], face.mIndices[2] };
-		for (int j = 0; j != 3; j++)
+		const aiMesh* mesh = scene->mMeshes[0];
+		std::vector<Vertex> positions;
+		for (unsigned int i = 0; i != mesh->mNumFaces; i++)
 		{
-			const aiVector3D v = mesh->mVertices[idx[j]];
-			positions.push_back(Vertex{
-				{v.x, v.z, v.y},
-				{v.x, v.z},
-				{v.x, v.z, v.y}
-				});
+			const aiFace& face = mesh->mFaces[i];
+			const unsigned int idx[3] = { face.mIndices[0], face.mIndices[1], face.mIndices[2] };
+			for (int j = 0; j != 3; j++)
+			{
+				const aiVector3D v = mesh->mVertices[idx[j]];
+				positions.push_back(Vertex{
+					{v.x, v.z, v.y},
+					{v.x, v.z},
+					{v.x, v.z, v.y}
+					});
+			}
 		}
 	}
 

@@ -106,14 +106,15 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASSIMP_NO_EXPORT=ON;ASSIMP_BUILD_ASSIMP_TOOLS=OFF;ASSIMP_BUILD_TESTS=OFF;ASSIMP_INSTALL_PDB=OFF;ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF;ASSIMP_BUILD_OBJ_IMPORTER=ON;ASSIMP_BUILD_GLTF_IMPORTER=ON;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASSIMP_NO_EXPORT=ON;ASSIMP_BUILD_ASSIMP_TOOLS=OFF;ASSIMP_BUILD_TESTS=OFF;ASSIMP_INSTALL_PDB=OFF;ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF;ASSIMP_BUILD_OBJ_IMPORTER=ON;ASSIMP_BUILD_GLTF_IMPORTER=ON;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Development\C++\dx12-starter\packages\Assimp.3.0.0\build\native\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)libs\glfw\lib-vc2022;$(VCInstallDir)\lib\store\amd64;$(VCInstallDir)\lib\amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(ProjectDir)libs\glfw\lib-vc2022\glfw3.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)libs\glfw\lib-vc2022\glfw3.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;dxguid.lib;$(SolutionDir)packages\Assimp.3.0.0\build\native\lib\x64\assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
