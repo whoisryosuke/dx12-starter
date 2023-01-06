@@ -109,6 +109,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;ASSIMP_NO_EXPORT=ON;ASSIMP_BUILD_ASSIMP_TOOLS=OFF;ASSIMP_BUILD_TESTS=OFF;ASSIMP_INSTALL_PDB=OFF;ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=OFF;ASSIMP_BUILD_OBJ_IMPORTER=ON;ASSIMP_BUILD_GLTF_IMPORTER=ON;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Development\C++\dx12-starter\packages\Assimp.3.0.0\build\native\include\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

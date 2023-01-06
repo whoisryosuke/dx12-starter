@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include <filesystem>
 
 Renderer::Renderer(unsigned int width, unsigned int height):
 	m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
@@ -196,7 +197,8 @@ bool Renderer::Init(HWND hWnd)
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 		};
 
 		// Describe and create the graphics pipeline state object (PSO).
@@ -224,12 +226,16 @@ bool Renderer::Init(HWND hWnd)
 
 
 	const aiScene* scene = aiImportFile(
-		"assets/models/Plane-Tris-Textured.gltf",
+		"assets/models/cube.obj",
 		aiProcess_Triangulate);
 
 	if (!scene || !scene->HasMeshes())
 	{
-		printf("Unable to load assets/models/Plane-Tris-Textured.gltf\n");
+		printf("Unable to load assets/models/cube.obj\n");
+		std::filesystem::path cwd = std::filesystem::current_path();
+		printf(cwd.string().c_str());
+		printf(std::filesystem::exists("assets/models/cube.obj") ? "true" : "False");
+		printf(aiGetErrorString());
 		//exit(255);
 	}
 
@@ -472,10 +478,11 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	// Render triangle
 	m_pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pd3dCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_pd3dCommandList->DrawInstanced(3, 1, 0, 0);
+	// TODO: Store vertex count somewhere instead of hardcode
+	m_pd3dCommandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
 
 	// Have imgui backend render using command list
-	ui->RenderDrawData(m_pd3dCommandList.Get());
+	//ui->RenderDrawData(m_pd3dCommandList.Get());
 	
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
