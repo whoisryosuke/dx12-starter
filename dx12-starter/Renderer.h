@@ -84,6 +84,16 @@ public:
 	};
 	static_assert((sizeof(SceneConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
 
+	// Global uniforms (camera position / matrix / etc)
+	struct GlobalsConstantBuffer
+	{
+		DirectX::XMMATRIX viewMatrix;
+		DirectX::XMMATRIX 	projectionMatrix;
+		DirectX::XMFLOAT3 	cameraPosition;
+		float padding[26]; // Padding so the constant buffer is 256-byte aligned.
+	};
+	static_assert((sizeof(GlobalsConstantBuffer) % 256) == 0, "Constant Buffer size must be 256-byte aligned");
+
 
 	Renderer(unsigned int width, unsigned int height);
 	bool Init(HWND hWnd);
@@ -126,6 +136,8 @@ public:
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 	ComPtr<ID3D12Resource> m_constantBuffer;
 	SceneConstantBuffer m_constantBufferData;
+	ComPtr<ID3D12Resource> m_constantBufferGlobals;
+	GlobalsConstantBuffer m_constantBufferGlobalsData;
 	UINT8* m_pCbvDataBegin;
 
 
