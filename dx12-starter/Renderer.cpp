@@ -337,7 +337,9 @@ bool Renderer::Init(HWND hWnd)
 
 	// Setup camera values
 	float fieldOfView = 3.14159f / 4.0f;
-	float aspectRatio = (float)screenSize.x / (float)screenSize.y;
+	// TODO: Add screen size to renderer class properties and Init method to use here
+	//float aspectRatio = (float)screenSize.x / (float)screenSize.y;
+	float aspectRatio = (float)1280 / (float)800;
 	Vector3 cameraPosition = Vector3(-3.0f, 3.0f, -8.0f);
 
 	GlobalsConstantBuffer passConstants;

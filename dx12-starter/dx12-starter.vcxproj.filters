@@ -105,4 +105,7 @@
   <ItemGroup>
     <CustomBuild Include="shaders.hlsl" />
   </ItemGroup>
+  <ItemGroup>
+    <Font Include="assets\fonts\Roboto-Medium.ttf" />
+  </ItemGroup>
 </Project>

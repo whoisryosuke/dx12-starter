@@ -1,4 +1,5 @@
 #pragma once
+// DirectX 12 APIs
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <dxgi1_6.h>
@@ -9,7 +10,11 @@
 #include <DirectXColors.h>
 #include <DirectXMath.h>
 #include "d3dx12.h"
+// DirectXTK Utilities
+#include <SimpleMath.h>
+using namespace DirectX::SimpleMath;
 
+// If used in DX12, prefer Microsoft ComPtr to using C++ pointers
 using Microsoft::WRL::ComPtr;
 
 #ifdef _DEBUG
