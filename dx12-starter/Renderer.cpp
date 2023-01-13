@@ -162,8 +162,8 @@ bool Renderer::Init(HWND hWnd)
 
 		// Here is where we "register" our constant buffer to an index (e.g. `register(b0)`)
 		// The baseShaderRegister property (third one) is the index
-		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+		ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
 		// We setup a descriptor table with our descriptor ranges (containing CBVs) 
 		// and set the "visibility" of properties to the vertex shader
 		rootParameters[0].InitAsDescriptorTable(_countof(ranges), ranges, D3D12_SHADER_VISIBILITY_VERTEX);
@@ -358,6 +358,7 @@ bool Renderer::Init(HWND hWnd)
 	passConstants.viewMatrix = Matrix::CreateLookAt(cameraPosition, Vector3(0, 0, 0), Vector3(0, 1, 0));
 	passConstants.projectionMatrix = Matrix::CreatePerspectiveFieldOfView(fieldOfView, aspectRatio, 0.001f, 1000.0f);
 	passConstants.cameraPosition = cameraPosition;
+	m_constantBufferGlobalsData = passConstants;
 
 	// Create the constant buffer for global uniforms
 	{
