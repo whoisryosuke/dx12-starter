@@ -22,10 +22,13 @@ PSInput VSMain(float3 position : POSITION, float2 uv : TEXCOORD, float3 normals 
 {
     PSInput result;
     
-    //result.position = float4(position, 1.f) + offset;
-    result.position = mul(viewMatrix, float4(position, 1));
-    result.position = mul(projectionMatrix, result.position);
-    result.color = uv;
+    result.position = float4(position, 1.f) + offset;
+    
+    //result.position = mul(viewMatrix, float4(position, 1));
+    //result.position = mul(projectionMatrix, result.position);
+    
+    //result.color = uv;
+    result.color = float2(cameraPosition.x, 0.f);
 
     return result;
 }

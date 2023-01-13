@@ -4,6 +4,7 @@ Renderer::Renderer(unsigned int width, unsigned int height) :
 	m_viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)),
 	m_scissorRect(0, 0, static_cast<LONG>(width), static_cast<LONG>(height)),
 	m_pCbvDataBegin(nullptr),
+	m_pCbvGlobalsDataBegin(nullptr),
 	m_constantBufferData{},
 	m_constantBufferGlobalsData {}
 {
@@ -89,7 +90,16 @@ bool Renderer::Init(HWND hWnd)
 		cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		ThrowIfFailed(m_pd3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvHeap)));
-	}
+
+	} 
+	//{
+	//	// Global constant buffer descriptor heap
+	//	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
+	//	cbvHeapDesc.NumDescriptors = 1;
+	//	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	//	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	//	ThrowIfFailed(m_pd3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&m_cbvGlobalHeap)));
+	//}
 
 	{
 		D3D12_COMMAND_QUEUE_DESC desc = {};
@@ -148,7 +158,7 @@ bool Renderer::Init(HWND hWnd)
 		}
 
 		CD3DX12_DESCRIPTOR_RANGE1 ranges[2];
-		CD3DX12_ROOT_PARAMETER1 rootParameters[2];
+		CD3DX12_ROOT_PARAMETER1 rootParameters[1];
 
 		// Here is where we "register" our constant buffer to an index (e.g. `register(b0)`)
 		// The baseShaderRegister property (third one) is the index
@@ -156,8 +166,7 @@ bool Renderer::Init(HWND hWnd)
 		ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
 		// We setup a descriptor table with our descriptor ranges (containing CBVs) 
 		// and set the "visibility" of properties to the vertex shader
-		rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
-		rootParameters[1].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_VERTEX);
+		rootParameters[0].InitAsDescriptorTable(_countof(ranges), ranges, D3D12_SHADER_VISIBILITY_VERTEX);
 
 		// Allow input layout and deny uneccessary access to certain pipeline stages.
 		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
@@ -326,7 +335,9 @@ bool Renderer::Init(HWND hWnd)
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 		cbvDesc.BufferLocation = m_constantBuffer->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = constantBufferSize;
-		m_pd3dDevice->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle0(m_cbvHeap->GetCPUDescriptorHandleForHeapStart(), 0, 0);
+		m_pd3dDevice->CreateConstantBufferView(&cbvDesc, cbvHandle0);
 
 		// Map and initialize the constant buffer. We don't unmap this until the
 		// app closes. Keeping things mapped for the lifetime of the resource is okay.
@@ -340,7 +351,8 @@ bool Renderer::Init(HWND hWnd)
 	// TODO: Add screen size to renderer class properties and Init method to use here
 	//float aspectRatio = (float)screenSize.x / (float)screenSize.y;
 	float aspectRatio = (float)1280 / (float)800;
-	Vector3 cameraPosition = Vector3(-3.0f, 3.0f, -8.0f);
+	//Vector3 cameraPosition = Vector3(-3.0f, 3.0f, -8.0f);
+	Vector3 cameraPosition = Vector3(1.0f, 3.0f, 0.0f);
 
 	GlobalsConstantBuffer passConstants;
 	passConstants.viewMatrix = Matrix::CreateLookAt(cameraPosition, Vector3(0, 0, 0), Vector3(0, 1, 0));
@@ -366,14 +378,16 @@ bool Renderer::Init(HWND hWnd)
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 		cbvDesc.BufferLocation = m_constantBufferGlobals->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = constantBufferSize;
-		// @TODO: Maybe replace `m_cbvHeap` with a new heap for this specific buffer?
-		m_pd3dDevice->CreateConstantBufferView(&cbvDesc, m_cbvHeap->GetCPUDescriptorHandleForHeapStart());
+
+		// We increment our placement in the heap here using `GetDescriptorHandleIncrementSize()`, since we store more than 1 CBV
+		CD3DX12_CPU_DESCRIPTOR_HANDLE cbvHandle1(m_cbvHeap->GetCPUDescriptorHandleForHeapStart(), m_pd3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
+		m_pd3dDevice->CreateConstantBufferView(&cbvDesc, cbvHandle1);
 
 		// Map and initialize the constant buffer. We don't unmap this until the
 		// app closes. Keeping things mapped for the lifetime of the resource is okay.
 		CD3DX12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-		ThrowIfFailed(m_constantBufferGlobals->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvDataBegin)));
-		memcpy(m_pCbvDataBegin, &m_constantBufferGlobalsData, sizeof(m_constantBufferGlobalsData));
+		ThrowIfFailed(m_constantBufferGlobals->Map(0, &readRange, reinterpret_cast<void**>(&m_pCbvGlobalsDataBegin)));
+		memcpy(m_pCbvGlobalsDataBegin, &m_constantBufferGlobalsData, sizeof(m_constantBufferGlobalsData));
 	}
 
 	// Create synchronization objects and wait until assets have been uploaded to the GPU.
@@ -465,9 +479,13 @@ void Renderer::RenderUI(DX12Playground::UI* ui)
 	m_pd3dCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	
 	// Setup constant buffer
-	ID3D12DescriptorHeap* ppHeaps[] = { m_cbvHeap.Get() };
+	ID3D12DescriptorHeap* ppHeaps[] = { 
+		m_cbvHeap.Get(), 
+		//m_cbvGlobalHeap.Get() 
+	};
 	m_pd3dCommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 	m_pd3dCommandList->SetGraphicsRootDescriptorTable(0, m_cbvHeap->GetGPUDescriptorHandleForHeapStart());
+	//m_pd3dCommandList->SetGraphicsRootDescriptorTable(1, m_cbvGlobalHeap->GetGPUDescriptorHandleForHeapStart());
 
 	m_pd3dCommandList->RSSetViewports(1, &m_viewport);
 	m_pd3dCommandList->RSSetScissorRects(1, &m_scissorRect);
@@ -655,4 +673,3 @@ void Renderer::GetHardwareAdapter(
 
 	*ppAdapter = adapter.Detach();
 }
-

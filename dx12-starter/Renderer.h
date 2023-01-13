@@ -124,6 +124,7 @@ public:
 	ID3D12DescriptorHeap* m_pd3dRtvDescHeap = NULL;
 	ID3D12DescriptorHeap* m_pd3dSrvDescHeap = NULL;
 	ComPtr<ID3D12DescriptorHeap> m_cbvHeap;
+	ComPtr<ID3D12DescriptorHeap> m_cbvGlobalHeap;
 	ComPtr<ID3D12PipelineState> m_pipelineState;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ID3D12CommandQueue* m_pd3dCommandQueue = NULL;
@@ -144,6 +145,7 @@ public:
 	ComPtr<ID3D12Resource> m_constantBufferGlobals;
 	GlobalsConstantBuffer m_constantBufferGlobalsData;
 	UINT8* m_pCbvDataBegin;
+	UINT8* m_pCbvGlobalsDataBegin;
 
 
 private:
