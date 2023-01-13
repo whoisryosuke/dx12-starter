@@ -351,8 +351,8 @@ bool Renderer::Init(HWND hWnd)
 	// TODO: Add screen size to renderer class properties and Init method to use here
 	//float aspectRatio = (float)screenSize.x / (float)screenSize.y;
 	float aspectRatio = (float)1280 / (float)800;
-	//Vector3 cameraPosition = Vector3(-3.0f, 3.0f, -8.0f);
-	Vector3 cameraPosition = Vector3(1.0f, 3.0f, 0.0f);
+	Vector3 cameraPosition = Vector3(-3.0f, 3.0f, -8.0f);
+	//Vector3 cameraPosition = Vector3(1.0f, 3.0f, 0.0f);
 
 	GlobalsConstantBuffer passConstants;
 	passConstants.viewMatrix = Matrix::CreateLookAt(cameraPosition, Vector3(0, 0, 0), Vector3(0, 1, 0));
